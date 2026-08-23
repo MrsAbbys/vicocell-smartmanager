@@ -43,7 +43,7 @@
     <div class="row row-cols-1 row-cols-md-3 row-cols-lg-4 g-4 mb-4">
         @forelse($products as $product)
             <div class="col">
-                <div class="card h-100 shadow-sm border-0 rounded-3 overflow-hidden">
+                <div class="card h-100 shadow-sm border-0 rounded-3 overflow-hidden d-flex flex-column">
                     @if($product->image)
                         <img src="{{ asset('storage/' . $product->image) }}" class="card-img-top object-fit-cover" style="height: 200px;" alt="{{ $product->name }}">
                     @else
@@ -51,21 +51,96 @@
                             <i class="bi bi-phone fs-1"></i>
                         </div>
                     @endif
-                    <div class="card-body d-flex flex-column">
+                    <div class="card-body d-flex flex-column pb-2">
                         <span class="badge bg-secondary mb-2 align-self-start">{{ $product->category->name }}</span>
                         <h5 class="card-title fw-bold text-dark mb-1">{{ $product->name }}</h5>
                         <p class="card-text text-muted small flex-grow-1">{{ Str::limit($product->description, 70) ?? 'Producto disponible en tienda.' }}</p>
-                        <div class="d-flex justify-content-between align-items-center mt-3 pt-2 border-top">
+
+                        <div class="d-flex justify-content-between align-items-center mt-3 pt-2 border-top mb-3">
                             <span class="fs-5 fw-bold text-primary">Bs. {{ number_format($product->price, 2) }}</span>
                             @if($product->stock > 0)
-                                <span class="badge bg-success-subtle text-success border border-success-subtle">En Stock</span>
+                                <span class="badge bg-success-subtle text-success border border-success-subtle">Stock: {{ $product->stock }}</span>
                             @else
                                 <span class="badge bg-danger-subtle text-danger border border-danger-subtle">Agotado</span>
                             @endif
                         </div>
+
+                        <!-- Botones de Acción -->
+                        <div class="d-grid gap-2">
+                            @if($product->stock > 0)
+                                @auth
+                                    <button type="button" class="btn btn-primary btn-sm fw-semibold" data-bs-toggle="modal" data-bs-target="#buyModal{{ $product->id }}">
+                                        <i class="bi bi-bag-plus me-1"></i> Comprar / Reservar
+                                    </button>
+                                @else
+                                    <a href="{{ route('login') }}" class="btn btn-primary btn-sm fw-semibold">
+                                        <i class="bi bi-box-arrow-in-right me-1"></i> Inicia sesión para comprar
+                                    </a>
+                                @endauth
+                            @else
+                                <button class="btn btn-secondary btn-sm" disabled>Agotado</button>
+                            @endif
+
+                            <a href="https://wa.me/59170000000?text=Hola%20VICOCELL,%20estoy%20interesado%20en%20el%20producto:%20{{ urlencode($product->name) }}%20(Bs.%20{{ $product->price }})"
+                               target="_blank" class="btn btn-outline-success btn-sm">
+                                <i class="bi bi-whatsapp me-1"></i> Consultar WhatsApp
+                            </a>
+                        </div>
                     </div>
                 </div>
             </div>
+
+            @if($product->stock > 0)
+                <!-- Modal de Compra Directa -->
+                <div class="modal fade" id="buyModal{{ $product->id }}" tabindex="-1" aria-hidden="true">
+                    <div class="modal-dialog modal-dialog-centered">
+                        <div class="modal-content border-0 shadow">
+                            <div class="modal-header bg-dark text-white">
+                                <h5 class="modal-title fw-bold"><i class="bi bi-cart-check me-2 text-primary"></i>Confirmar Pedido</h5>
+                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <form action="{{ route('customer.checkout', $product) }}" method="POST">
+                                @csrf
+                                <div class="modal-body">
+                                    <div class="d-flex align-items-center mb-3">
+                                        @if($product->image)
+                                            <img src="{{ asset('storage/' . $product->image) }}" class="rounded me-3 object-fit-cover" style="width: 60px; height: 60px;" alt="{{ $product->name }}">
+                                        @endif
+                                        <div>
+                                            <h6 class="fw-bold mb-0 text-dark">{{ $product->name }}</h6>
+                                            <span class="text-primary fw-bold">Precio Unitario: Bs. {{ number_format($product->price, 2) }}</span>
+                                        </div>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label class="form-label fw-semibold small">Cantidad a comprar (Máx: {{ $product->stock }})</label>
+                                        <input type="number" name="quantity" class="form-control" value="1" min="1" max="{{ $product->stock }}" required>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label class="form-label fw-semibold small">Forma de Pago</label>
+                                        <select name="payment_method" class="form-select" required>
+                                            <option value="Pago contra entrega (Efectivo)">Pago contra entrega (Efectivo)</option>
+                                            <option value="Pago por QR / Transferencia">Pago por QR / Transferencia</option>
+                                        </select>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label class="form-label fw-semibold small">Indicaciones de Entrega / Dirección (Opcional)</label>
+                                        <textarea name="delivery_notes" class="form-control" rows="2" placeholder="Ej: Retiro en tienda / Enviar a domicilio..."></textarea>
+                                    </div>
+                                </div>
+                                <div class="modal-footer bg-light">
+                                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancelar</button>
+                                    <button type="submit" class="btn btn-primary btn-sm fw-semibold">
+                                        <i class="bi bi-check2-circle me-1"></i> Confirmar Compra
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            @endif
         @empty
             <div class="col-12 text-center py-5">
                 <i class="bi bi-inbox display-4 text-muted d-block mb-2"></i>

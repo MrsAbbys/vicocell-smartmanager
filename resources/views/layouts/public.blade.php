@@ -60,6 +60,12 @@
                                 </li>
                                 <li><hr class="dropdown-divider"></li>
                                 <li>
+                                    <a class="dropdown-item" href="{{ route('customer.orders') }}">
+                                        <i class="bi bi-bag-check me-1 text-primary"></i> Mis Compras y Pedidos
+                                    </a>
+                                </li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li>
                                     <form action="{{ route('logout') }}" method="POST">
                                         @csrf
                                         <button type="submit" class="dropdown-item text-danger">

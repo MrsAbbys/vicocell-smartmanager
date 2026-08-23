@@ -45,4 +45,12 @@ class User extends Authenticatable
     {
         return $this->role === 'cliente';
     }
+    public function client(): \Illuminate\Database\Eloquent\Relations\HasOne
+    {
+        return $this->hasOne(Client::class);
+    }
+    public function assignedRepairs(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(RepairOrder::class, 'technician_id');
+    }
 }

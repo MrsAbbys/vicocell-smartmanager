@@ -28,4 +28,8 @@ class Product extends Model
     {
         return $this->belongsTo(Category::class);
     }
+    public function saleDetails(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(SaleDetail::class);
+    }
 }

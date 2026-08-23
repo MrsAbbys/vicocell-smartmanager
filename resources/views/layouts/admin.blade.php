@@ -33,10 +33,24 @@
             <div class="collapse navbar-collapse" id="navAdmin">
                 <ul class="navbar-nav me-auto mb-2 mb-lg-0">
                     <li class="nav-item">
-                        <a class="nav-link text-white" href="{{ route('admin.dashboard') }}"><i class="bi bi-speedometer2 me-1"></i> Dashboard</a>
+                        <a class="nav-link text-white {{ request()->routeIs('admin.dashboard') ? 'active fw-bold' : '' }}" href="{{ route('admin.dashboard') }}">
+                            <i class="bi bi-speedometer2 me-1"></i> Dashboard
+                        </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link text-white" href="{{ route('products.index') }}"><i class="bi bi-box-seam me-1"></i> Inventario</a>
+                        <a class="nav-link text-white {{ request()->routeIs('products.*') ? 'active fw-bold' : '' }}" href="{{ route('products.index') }}">
+                            <i class="bi bi-box-seam me-1"></i> Inventario
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-white {{ request()->routeIs('sales.*') ? 'active fw-bold' : '' }}" href="{{ route('sales.index') }}">
+                            <i class="bi bi-cart-check me-1"></i> Ventas
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-white {{ request()->routeIs('repairs.*') ? 'active fw-bold' : '' }}" href="{{ route('repairs.index') }}">
+                            <i class="bi bi-tools me-1"></i> Servicio Técnico
+                        </a>
                     </li>
                 </ul>
                 <div class="d-flex align-items-center gap-3">
