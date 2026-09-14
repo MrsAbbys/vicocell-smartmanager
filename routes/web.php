@@ -1,20 +1,24 @@
 <?php
 
+use App\Http\Controllers\AiChatController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CustomerOrderController;
+use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\RepairOrderController;
+use App\Http\Controllers\ReportController;
 use App\Http\Controllers\SaleController;
 use App\Http\Controllers\StoreController;
 use Illuminate\Support\Facades\Route;
 
 /*
 |--------------------------------------------------------------------------
-| Rutas Públicas (Catálogo, Tienda y Rastreo)
+| Rutas Públicas (Catálogo, Tienda, Asistente IA y Rastreo)
 |--------------------------------------------------------------------------
 */
 Route::get('/', [StoreController::class, 'index'])->name('store.index');
 Route::get('/consultar-reparacion', [StoreController::class, 'trackRepair'])->name('store.track');
+Route::post('/ai/chat', [AiChatController::class, 'ask'])->name('ai.chat');
 
 // Rutas de Autenticación
 Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
@@ -39,11 +43,11 @@ Route::middleware('auth')->group(function () {
 |--------------------------------------------------------------------------
 */
 Route::middleware(['auth', 'role:admin,tecnico'])->prefix('admin')->group(function () {
-    Route::get('/', function () {
-        return redirect()->route('products.index');
-    })->name('admin.dashboard');
+    Route::get('/', [DashboardController::class, 'index'])->name('admin.dashboard');
+    Route::get('/dashboard', [DashboardController::class, 'index']);
 
     Route::resource('products', ProductController::class);
     Route::resource('sales', SaleController::class)->only(['index', 'create', 'store', 'show']);
     Route::resource('repairs', RepairOrderController::class);
+    Route::get('/reports', [ReportController::class, 'index'])->name('reports.index');
 });

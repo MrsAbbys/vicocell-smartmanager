@@ -5,7 +5,7 @@
 @section('content')
 <div class="row align-items-center mb-4">
     <div class="col-md-6">
-        <h3 class="fw-bold text-dark mb-0"><i class="bi bi-cart-check me-2 text-primary"></i>Historial de Ventas</h3>
+        <h3 class="fw-bold mb-0"><i class="bi bi-cart-check me-2 text-primary"></i>Historial de Ventas</h3>
         <p class="text-muted small mb-0">Registro y auditoría de transacciones comerciales</p>
     </div>
     <div class="col-md-6 text-md-end mt-3 mt-md-0">
@@ -20,12 +20,12 @@
         <form method="GET" action="{{ route('sales.index') }}" class="row g-2 align-items-center">
             <div class="col-md-8 col-lg-6">
                 <div class="input-group">
-                    <span class="input-group-text bg-white"><i class="bi bi-search text-muted"></i></span>
+                    <span class="input-group-text"><i class="bi bi-search text-muted"></i></span>
                     <input type="text" name="search" class="form-control" placeholder="Buscar por Nº comprobante, cliente o CI..." value="{{ $search }}">
                 </div>
             </div>
             <div class="col-md-4 col-lg-3 d-flex gap-2">
-                <button type="submit" class="btn btn-outline-primary w-100">
+                <button type="submit" class="btn btn-primary w-100">
                     <i class="bi bi-filter me-1"></i> Buscar
                 </button>
                 @if($search)
@@ -39,7 +39,7 @@
 <div class="card shadow-sm border-0">
     <div class="table-responsive">
         <table class="table table-hover align-middle mb-0">
-            <thead class="table-light">
+            <thead>
                 <tr>
                     <th>Comprobante</th>
                     <th>Fecha y Hora</th>
@@ -53,7 +53,7 @@
             <tbody>
                 @forelse($sales as $sale)
                     <tr>
-                        <td class="fw-bold text-primary">{{ $sale->voucher_number }}</td>
+                        <td class="fw-bold text-info">{{ $sale->voucher_number }}</td>
                         <td class="small">{{ $sale->created_at->format('d/m/Y H:i') }}</td>
                         <td>
                             <strong>{{ $sale->client->name ?? 'Cliente Mostrador' }}</strong>
@@ -84,8 +84,8 @@
         </table>
     </div>
     @if($sales->hasPages())
-        <div class="card-footer bg-white d-flex justify-content-center py-3">
-            {{ $sales->links() }}
+        <div class="card-footer d-flex justify-content-center py-3">
+            {{ $sales->links('pagination::bootstrap-5') }}
         </div>
     @endif
 </div>

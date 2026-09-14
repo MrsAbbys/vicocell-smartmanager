@@ -5,10 +5,12 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes; // <-- 1. Importar
 
 class Product extends Model
 {
-    use HasFactory;
+    use HasFactory, SoftDeletes; // <-- 2. Usar el trait
 
     protected $fillable = [
         'category_id',
@@ -16,19 +18,16 @@ class Product extends Model
         'description',
         'price',
         'stock',
-        'min_stock',
         'image',
         'is_active',
     ];
 
-    /**
-     * Relación: un producto pertenece a una categoría.
-     */
     public function category(): BelongsTo
     {
         return $this->belongsTo(Category::class);
     }
-    public function saleDetails(): \Illuminate\Database\Eloquent\Relations\HasMany
+
+    public function saleDetails(): HasMany
     {
         return $this->hasMany(SaleDetail::class);
     }

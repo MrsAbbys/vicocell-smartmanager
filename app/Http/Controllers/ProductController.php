@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Category;
 use App\Models\Product;
+use App\Models\SaleDetail;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
@@ -110,16 +111,29 @@ class ProductController extends Controller
     }
 
     /**
-     * Eliminar un producto.
+     * Elimina o desactiva un producto del inventario.
      */
     public function destroy(Product $product)
     {
+        // 1. Verificar si el producto tiene historial en ventas registradas
+        $hasSales = SaleDetail::where('product_id', $product->id)->exists();
+
+        if ($hasSales) {
+            // Desactivación lógica: se oculta de la tienda y del POS sin corromper ventas previas
+            $product->update(['is_active' => false]);
+
+            return redirect()->route('products.index')
+                ->with('success', "El producto '{$product->name}' tiene ventas asociadas, por lo que fue desactivado del catálogo en lugar de eliminarse permanentemente.");
+        }
+
+        // 2. Si nunca fue vendido, se elimina de forma segura junto a su imagen física
         if ($product->image && Storage::disk('public')->exists($product->image)) {
             Storage::disk('public')->delete($product->image);
         }
 
         $product->delete();
 
-        return redirect()->route('products.index')->with('success', 'Producto eliminado correctamente.');
+        return redirect()->route('products.index')
+            ->with('success', "Producto '{$product->name}' eliminado correctamente.");
     }
 }

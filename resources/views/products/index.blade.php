@@ -5,7 +5,7 @@
 @section('content')
 <div class="d-flex justify-content-between align-items-center mb-3">
     <div>
-        <h3 class="fw-bold mb-0 text-dark"><i class="bi bi-box-seam me-2 text-primary"></i>Gestión de Inventario</h3>
+        <h3 class="fw-bold mb-0"><i class="bi bi-box-seam me-2 text-primary"></i>Gestión de Inventario</h3>
         <p class="text-muted small mb-0">Control de celulares, accesorios y repuestos</p>
     </div>
     <a href="{{ route('products.create') }}" class="btn btn-primary">
@@ -14,7 +14,7 @@
 </div>
 
 @if($lowStockCount > 0)
-    <div class="alert alert-warning d-flex justify-content-between align-items-center mb-3 py-2">
+    <div class="alert alert-warning d-flex justify-content-between align-items-center mb-3 py-2 border-0 shadow-sm">
         <div>
             <i class="bi bi-exclamation-triangle-fill me-2 fs-5"></i>
             <strong>Atención:</strong> Hay <strong>{{ $lowStockCount }}</strong> producto(s) con stock igual o por debajo del mínimo.
@@ -36,12 +36,12 @@
         <form method="GET" action="{{ route('products.index') }}" class="row g-2 mb-3">
             <div class="col-md-8">
                 <div class="input-group">
-                    <span class="input-group-text bg-white"><i class="bi bi-search text-muted"></i></span>
+                    <span class="input-group-text"><i class="bi bi-search text-muted"></i></span>
                     <input type="text" name="search" class="form-control" placeholder="Buscar por nombre o descripción..." value="{{ $search }}">
                 </div>
             </div>
             <div class="col-md-4 d-flex gap-2">
-                <button type="submit" class="btn btn-dark w-100"><i class="bi bi-funnel me-1"></i> Filtrar</button>
+                <button type="submit" class="btn btn-primary w-100"><i class="bi bi-funnel me-1"></i> Filtrar</button>
                 @if($search || $lowStockOnly)
                     <a href="{{ route('products.index') }}" class="btn btn-outline-secondary">Limpiar</a>
                 @endif
@@ -50,7 +50,7 @@
 
         <div class="table-responsive">
             <table class="table table-hover align-middle mb-0">
-                <thead class="table-light">
+                <thead>
                     <tr>
                         <th style="width: 70px;">Imagen</th>
                         <th>Producto</th>
@@ -67,21 +67,23 @@
                         <tr>
                             <td>
                                 @if($product->image)
-                                    <img src="{{ asset('storage/' . $product->image) }}" alt="{{ $product->name }}" class="rounded object-fit-cover" width="50" height="50">
+                                    <div class="d-flex align-items-center justify-content-center rounded border p-1" style="width: 50px; height: 50px; background-color: var(--input-bg);">
+                                        <img src="{{ asset('storage/' . $product->image) }}" alt="{{ $product->name }}" class="img-fluid" style="max-height: 100%; max-width: 100%; object-fit: contain;">
+                                    </div>
                                 @else
-                                    <div class="bg-light rounded d-flex align-items-center justify-content-center text-muted" style="width: 50px; height: 50px;">
+                                    <div class="rounded d-flex align-items-center justify-content-center text-muted border" style="width: 50px; height: 50px; background-color: var(--input-bg);">
                                         <i class="bi bi-image"></i>
                                     </div>
                                 @endif
                             </td>
                             <td>
-                                <span class="fw-bold d-block text-dark">{{ $product->name }}</span>
+                                <span class="fw-bold d-block">{{ $product->name }}</span>
                                 <small class="text-muted">{{ Str::limit($product->description, 40) ?? 'Sin descripción' }}</small>
                             </td>
                             <td>
                                 <span class="badge bg-secondary">{{ $product->category->name ?? 'Sin categoría' }}</span>
                             </td>
-                            <td class="fw-bold">{{ number_format($product->price, 2) }}</td>
+                            <td class="fw-bold">Bs. {{ number_format($product->price, 2) }}</td>
                             <td>
                                 @if($product->stock <= $product->min_stock)
                                     <span class="badge bg-danger fs-6">{{ $product->stock }}</span>
@@ -121,8 +123,8 @@
             </table>
         </div>
 
-        <div class="mt-3">
-            {{ $products->links() }}
+        <div class="d-flex justify-content-center my-4">
+            {{ $products->links('pagination::bootstrap-5') }}
         </div>
     </div>
 </div>

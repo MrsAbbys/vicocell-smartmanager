@@ -5,7 +5,7 @@
 @section('content')
 <div class="row align-items-center mb-4">
     <div class="col-md-6">
-        <h3 class="fw-bold text-dark mb-0"><i class="bi bi-tools me-2 text-primary"></i>Órdenes de Servicio Técnico</h3>
+        <h3 class="fw-bold mb-0"><i class="bi bi-tools me-2 text-primary"></i>Órdenes de Servicio Técnico</h3>
         <p class="text-muted small mb-0">Control de reparaciones, diagnósticos y entregas de taller</p>
     </div>
     <div class="col-md-6 text-md-end mt-3 mt-md-0">
@@ -21,7 +21,7 @@
         <form method="GET" action="{{ route('repairs.index') }}" class="row g-2 align-items-center">
             <div class="col-md-5">
                 <div class="input-group">
-                    <span class="input-group-text bg-white"><i class="bi bi-search text-muted"></i></span>
+                    <span class="input-group-text"><i class="bi bi-search text-muted"></i></span>
                     <input type="text" name="search" class="form-control" placeholder="Buscar por código, cliente, teléfono, IMEI o modelo..." value="{{ $search }}">
                 </div>
             </div>
@@ -34,7 +34,7 @@
                 </select>
             </div>
             <div class="col-md-3 d-flex gap-2">
-                <button type="submit" class="btn btn-outline-primary w-100">
+                <button type="submit" class="btn btn-primary w-100">
                     <i class="bi bi-filter me-1"></i> Filtrar
                 </button>
                 @if($search || $status)
@@ -49,7 +49,7 @@
 <div class="card shadow-sm border-0">
     <div class="table-responsive">
         <table class="table table-hover align-middle mb-0">
-            <thead class="table-light">
+            <thead>
                 <tr>
                     <th>Código</th>
                     <th>Cliente</th>
@@ -62,25 +62,27 @@
                 </tr>
             </thead>
             <tbody>
+                @php
+                    $badgeClasses = [
+                        'Recibido' => 'bg-secondary',
+                        'En Revision' => 'bg-info text-dark',
+                        'En Reparacion' => 'bg-warning text-dark',
+                        'Listo para Entrega' => 'bg-primary',
+                        'Entregado' => 'bg-success',
+                        'Cancelado' => 'bg-danger'
+                    ];
+                @endphp
                 @forelse($repairOrders as $item)
-                    @php
-                        $badgeClasses = [
-                            'Recibido' => 'bg-secondary',
-                            'En Revision' => 'bg-info text-dark',
-                            'En Reparacion' => 'bg-warning text-dark',
-                            'Listo para Entrega' => 'bg-primary',
-                            'Entregado' => 'bg-success',
-                            'Cancelado' => 'bg-danger'
-                        ];
-                    @endphp
                     <tr>
-                        <td class="fw-bold text-primary">{{ $item->tracking_code }}</td>
+                        <td class="fw-bold text-info">{{ $item->tracking_code }}</td>
                         <td>
                             <strong>{{ $item->client->name }}</strong>
-                            <small class="text-muted d-block">{{ $item->client->phone ?? 'Sin teléfono' }}</small>
+                            @if($item->client && $item->client->phone)
+                                <small class="text-muted d-block"><i class="bi bi-whatsapp text-success me-1"></i>{{ $item->client->phone }}</small>
+                            @endif
                         </td>
                         <td>
-                            <span>{{ $item->brand }} {{ $item->model }}</span>
+                            <span class="fw-semibold">{{ $item->brand }} {{ $item->model }}</span>
                             <small class="text-muted d-block">{{ $item->device_type }}</small>
                         </td>
                         <td class="small text-muted" style="max-width: 220px;">
@@ -118,8 +120,8 @@
         </table>
     </div>
     @if($repairOrders->hasPages())
-        <div class="card-footer bg-white d-flex justify-content-center py-3">
-            {{ $repairOrders->links() }}
+        <div class="card-footer d-flex justify-content-center py-3">
+            {{ $repairOrders->links('pagination::bootstrap-5') }}
         </div>
     @endif
 </div>
