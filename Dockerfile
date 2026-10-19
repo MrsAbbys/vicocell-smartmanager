@@ -1,6 +1,6 @@
 FROM php:8.2-fpm-alpine
 
-# Instalar dependencias del sistema y extensiones PHP necesarias
+# Instalar dependencias del sistema y extensiones PHP
 RUN apk update && apk add --no-cache \
     nginx \
     curl \
@@ -26,18 +26,14 @@ COPY . .
 # Instalar dependencias de Composer
 RUN composer install --no-dev --optimize-autoloader --no-interaction
 
-# Permisos para storage y cache
-RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache \
-    && chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
+# Permisos para storage, bootstrap cache y database
+RUN mkdir -p /var/www/html/database \
+    && touch /var/www/html/database/database.sqlite \
+    && chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache /var/www/html/database \
+    && chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache /var/www/html/database
 
-# Puerto expuesto por Render
 EXPOSE 8080
 
-# Comando de arranque: enlazar almacenamiento, preparar BD y levantar servidor
-CMD touch /var/www/html/database/database.sqlite \
-    && chown -R www-data:www-data /var/www/html/database \
-    && chmod -R 775 /var/www/html/database \
-    && php artisan storage:link || true \
-    && php artisan migrate --force || true \
-    && php artisan db:seed --force || true \
+# Arranque automático de enlace y servidor
+CMD php artisan storage:link || true \
     && php artisan serve --host=0.0.0.0 --port=${PORT:-8080}
