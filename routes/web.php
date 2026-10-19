@@ -60,16 +60,26 @@ Route::middleware(['auth', 'role:admin,tecnico'])->prefix('admin')->group(functi
 */
 Route::get('/setup-db-vicocell', function () {
     try {
-        Artisan::call('migrate', ['--force' => true]);
+        // migrate:fresh limpia cualquier estructura previa y recrea todas las tablas desde cero
+        Artisan::call('migrate:fresh', ['--force' => true]);
+        $migOut = Artisan::output();
+
         Artisan::call('db:seed', ['--force' => true]);
+        $seedOut = Artisan::output();
+
         return response()->json([
             'status' => 'success',
-            'mensaje' => 'Migraciones y seeders ejecutados correctamente.'
-        ]);
+            'mensaje' => 'Tablas creadas y seeders ejecutados correctamente en MySQL.',
+            'migrate_output' => trim($migOut),
+            'seed_output' => trim($seedOut)
+        ], 200, [], JSON_PRETTY_PRINT);
+
     } catch (\Throwable $e) {
         return response()->json([
             'status' => 'error',
-            'mensaje' => $e->getMessage()
-        ], 500);
+            'clase' => get_class($e),
+            'mensaje' => $e->getMessage(),
+            'archivo' => $e->getFile() . ':' . $e->getLine()
+        ], 200, [], JSON_PRETTY_PRINT);
     }
 });
