@@ -39,6 +39,7 @@ class CustomerOrderController extends Controller
         $request->validate([
             'quantity' => 'required|integer|min:1|max:' . $product->stock,
             'payment_method' => 'required|string',
+            'payment_proof' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:4096',
             'delivery_notes' => 'nullable|string|max:255',
         ]);
 
@@ -50,12 +51,18 @@ class CustomerOrderController extends Controller
             [
                 'name' => $user->name,
                 'email' => $user->email,
-                'phone' => $user->phone,
+                'phone' => $user->phone ?? null,
             ]
         );
 
+        // Procesar y almacenar el comprobante si fue subido
+        $proofPath = null;
+        if ($request->hasFile('payment_proof')) {
+            $proofPath = $request->file('payment_proof')->store('proofs', 'public');
+        }
+
         try {
-            $sale = DB::transaction(function () use ($product, $request, $user, $client) {
+            $sale = DB::transaction(function () use ($product, $request, $client, $proofPath) {
                 $lockedProduct = Product::lockForUpdate()->findOrFail($product->id);
 
                 if ($lockedProduct->stock < $request->quantity) {
@@ -74,6 +81,7 @@ class CustomerOrderController extends Controller
                     'voucher_number' => $voucherNumber,
                     'total' => $total,
                     'payment_method' => $request->payment_method,
+                    'payment_proof' => $proofPath,
                     'notes' => 'Pedido Web de Cliente. ' . ($request->delivery_notes ?? ''),
                 ]);
 

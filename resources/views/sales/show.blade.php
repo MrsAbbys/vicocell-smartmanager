@@ -112,6 +112,28 @@
                 </div>
             @endif
 
+            <!-- Comprobante de Pago Adjunto (QR / Transferencia) -->
+            @if($sale->payment_proof)
+                <div class="card border-info-subtle bg-light-subtle p-3 mb-3 no-print">
+                    <div class="d-flex align-items-center justify-content-between mb-2">
+                        <strong class="small text-secondary text-uppercase">
+                            <i class="bi bi-receipt-cutoff text-info me-1"></i> Comprobante de Pago Subido por el Cliente:
+                        </strong>
+                        <a href="{{ asset('storage/' . $sale->payment_proof) }}" target="_blank" class="btn btn-outline-info btn-sm">
+                            <i class="bi bi-box-arrow-up-right me-1"></i> Ver en pantalla completa
+                        </a>
+                    </div>
+                    <div>
+                        <a href="{{ asset('storage/' . $sale->payment_proof) }}" target="_blank">
+                            <img src="{{ asset('storage/' . $sale->payment_proof) }}"
+                                 alt="Comprobante de pago"
+                                 class="img-thumbnail rounded shadow-sm"
+                                 style="max-height: 180px; object-fit: contain;">
+                        </a>
+                    </div>
+                </div>
+            @endif
+
             <div class="text-center text-muted small mt-4 pt-3 border-top">
                 <p class="mb-0">¡Gracias por su preferencia!</p>
                 <p class="mb-0">VICOCELL SmartManager - Garantía sujeta a términos y condiciones.</p>
