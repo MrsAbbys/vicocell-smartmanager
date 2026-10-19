@@ -34,5 +34,10 @@ RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cac
 EXPOSE 8080
 
 # Comando de arranque: enlazar almacenamiento, preparar BD y levantar servidor
-CMD php artisan storage:link || true \
+CMD touch /var/www/html/database/database.sqlite \
+    && chown -R www-data:www-data /var/www/html/database \
+    && chmod -R 775 /var/www/html/database \
+    && php artisan storage:link || true \
+    && php artisan migrate --force || true \
+    && php artisan db:seed --force || true \
     && php artisan serve --host=0.0.0.0 --port=${PORT:-8080}
