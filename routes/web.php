@@ -1,90 +1,75 @@
 <?php
 
+use App\Http\Controllers\AiChatController;
+use App\Http\Controllers\AuthController;
+use App\Http\Controllers\CustomerOrderController;
+use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\ProductController;
+use App\Http\Controllers\RepairOrderController;
+use App\Http\Controllers\ReportController;
+use App\Http\Controllers\SaleController;
+use App\Http\Controllers\StoreController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Artisan;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Schema;
 
 /*
 |--------------------------------------------------------------------------
-| Web Routes
+| Rutas Públicas (Catálogo, Tienda, Asistente IA y Rastreo)
 |--------------------------------------------------------------------------
 */
+Route::get('/', [StoreController::class, 'index'])->name('store.index');
+Route::get('/consultar-reparacion', [StoreController::class, 'trackRepair'])->name('store.track');
+Route::post('/ai/chat', [AiChatController::class, 'ask'])->name('ai.chat');
 
-// Ruta principal del catálogo / tienda
-Route::get('/', function () {
-    $products = [];
-    if (Schema::hasTable('products')) {
-        $products = DB::table('products')->get();
-    }
-    return view('welcome', compact('products'));
+// Rutas de Autenticación
+Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
+Route::post('/login', [AuthController::class, 'login'])->name('login.post');
+Route::get('/register', [AuthController::class, 'showRegisterForm'])->name('register');
+Route::post('/register', [AuthController::class, 'register'])->name('register.post');
+Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
+
+/*
+|--------------------------------------------------------------------------
+| Rutas Protegidas de Clientes
+|--------------------------------------------------------------------------
+*/
+Route::middleware('auth')->group(function () {
+    Route::get('/mis-compras', [CustomerOrderController::class, 'myOrders'])->name('customer.orders');
+    Route::post('/comprar/{product}', [CustomerOrderController::class, 'checkoutProduct'])->name('customer.checkout');
 });
 
-// Ruta de inicialización e inserción forzada de productos
+/*
+|--------------------------------------------------------------------------
+| Rutas Protegidas de Administración (Solo Administrador y Técnico)
+|--------------------------------------------------------------------------
+*/
+Route::middleware(['auth', 'role:admin,tecnico'])->prefix('admin')->group(function () {
+    Route::get('/', [DashboardController::class, 'index'])->name('admin.dashboard');
+    Route::get('/dashboard', [DashboardController::class, 'index']);
+
+    Route::resource('products', ProductController::class);
+    Route::resource('sales', SaleController::class)->only(['index', 'create', 'store', 'show']);
+    Route::resource('repairs', RepairOrderController::class);
+    Route::get('/reports', [ReportController::class, 'index'])->name('reports.index');
+});
+
+/*
+|--------------------------------------------------------------------------
+| Inicializador de Base de Datos para Render
+|--------------------------------------------------------------------------
+*/
 Route::get('/setup-db-vicocell', function () {
-    // 1. Ejecutar migraciones forzadas
-    Artisan::call('migrate', ['--force' => true]);
-
-    // 2. Si la tabla no existe o para asegurar los campos mínimos, verificar si tiene registros
-    if (Schema::hasTable('products')) {
-        DB::table('products')->truncate();
-
-        // Detectar columnas existentes para evitar errores de campo no encontrado
-        $hasDescription = Schema::hasColumn('products', 'description');
-        $hasCategory = Schema::hasColumn('products', 'category');
-
-        $items = [
-            [
-                'name' => 'Samsung Galaxy A54 5G 128GB',
-                'price' => 2450.00,
-                'stock' => 10,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
-            [
-                'name' => 'Xiaomi Redmi Note 13 Pro 256GB',
-                'price' => 2100.00,
-                'stock' => 8,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
-            [
-                'name' => 'Cargador Rapido 25W Tipo C',
-                'price' => 85.00,
-                'stock' => 25,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
-            [
-                'name' => 'Funda Antigolpes + Vidrio Templado',
-                'price' => 45.00,
-                'stock' => 50,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]
-        ];
-
-        // Añadir campos opcionales solo si existen en tu migración
-        foreach ($items as &$item) {
-            if ($hasDescription) {
-                $item['description'] = 'Producto original con garantía técnica VicoCell.';
-            }
-            if ($hasCategory) {
-                $item['category'] = str_contains($item['name'], 'Cargador') || str_contains($item['name'], 'Funda') ? 'Accesorios' : 'Celulares';
-            }
-        }
-
-        DB::table('products')->insert($items);
-
+    try {
+        Artisan::call('migrate', ['--force' => true]);
+        Artisan::call('db:seed', ['--force' => true]);
         return response()->json([
             'status' => 'success',
-            'message' => 'Base de datos migrada y 4 productos insertados exitosamente.',
-            'total_productos' => DB::table('products')->count()
+            'mensaje' => 'Migraciones y seeders ejecutados correctamente.'
         ]);
+    } catch (\Throwable $e) {
+        return response()->json([
+            'status' => 'error',
+            'mensaje' => $e->getMessage()
+        ], 500);
     }
-
-    return response()->json([
-        'status' => 'error',
-        'message' => 'La tabla products aun no existe tras la migracion.'
-    ], 500);
 });
