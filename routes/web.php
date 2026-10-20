@@ -11,6 +11,8 @@ use App\Http\Controllers\SaleController;
 use App\Http\Controllers\StoreController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\DB;
 
 /*
 |--------------------------------------------------------------------------
@@ -54,85 +56,84 @@ Route::middleware(['auth', 'role:admin,tecnico'])->prefix('admin')->group(functi
 });
 
 /*
+|--------------------------------------------------------------------------
+| Utilidades para Render: Almacenamiento e Imágenes
+|--------------------------------------------------------------------------
+*/
+Route::get('/link-storage-vicocell', function () {
+    try {
+        Artisan::call('storage:link');
+        return response()->json([
+            'status' => 'success',
+            'mensaje' => 'Enlace storage:link ejecutado con exito.',
+            'salida' => trim(Artisan::output())
+        ], 200, [], JSON_PRETTY_PRINT);
+    } catch (\Throwable $e) {
+        return response()->json([
+            'status' => 'error',
+            'mensaje' => $e->getMessage()
+        ], 500, [], JSON_PRETTY_PRINT);
+    }
+});
+
 /*
 |--------------------------------------------------------------------------
-| Inicializador de Base de Datos para Render
+| Reparador y Activador de Base de Datos e Imágenes
 |--------------------------------------------------------------------------
 */
 Route::get('/setup-db-vicocell', function () {
     try {
-        // 1. Ejecutar migrate:fresh para tener las tablas limpias
-        Artisan::call('migrate:fresh', ['--force' => true]);
+        set_time_limit(180);
 
-        // 2. Ejecutar seeders si existen (roles, usuarios, etc.)
+        // Crear enlace simbolico a storage si no existe
         try {
-            Artisan::call('db:seed', ['--force' => true]);
-        } catch (\Throwable $th) {
-            // Si el seeder falla, continuamos con la inserción manual
+            Artisan::call('storage:link');
+        } catch (\Throwable $t) {
+            // Continuar si ya estaba enlazado
         }
 
-        // 3. Forzar productos activos y compatibles con StoreController
         if (Schema::hasTable('products')) {
-            // Si ya se crearon productos por seeder, los activamos todos:
+            // 1. Activar todos los productos existentes
             DB::table('products')->update(['is_active' => 1]);
 
-            // Si la tabla quedó con 0 productos, insertamos productos de prueba con todas las columnas posibles:
-            if (DB::table('products')->count() === 0) {
-                $baseProduct = [
-                    'name' => 'Samsung Galaxy A54 5G 128GB',
-                    'description' => 'Pantalla Super AMOLED 120Hz, cámara triple 50MP, batería 5000 mAh.',
-                    'price' => 2450.00,
-                    'stock' => 15,
-                    'is_active' => 1,
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ];
+            // 2. Asignar URLs de imagen directas a los productos si estan vacias
+            $imagenesMuestra = [
+                'Samsung' => 'https://images.unsplash.com/photo-1610945265064-0e34e5519bbf?w=500&auto=format&fit=crop&q=60',
+                'iPhone'  => 'https://images.unsplash.com/photo-1510557880182-3d4d3cba35a5?w=500&auto=format&fit=crop&q=60',
+                'Xiaomi'  => 'https://images.unsplash.com/photo-1598327105666-5b89351aff97?w=500&auto=format&fit=crop&q=60',
+                'Default' => 'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=500&auto=format&fit=crop&q=60'
+            ];
 
-                // Detectar nombres alternativos en tu migración
-                if (Schema::hasColumn('products', 'nombre')) $baseProduct['nombre'] = $baseProduct['name'];
-                if (Schema::hasColumn('products', 'descripcion')) $baseProduct['descripcion'] = $baseProduct['description'];
-                if (Schema::hasColumn('products', 'precio')) $baseProduct['precio'] = $baseProduct['price'];
-                if (Schema::hasColumn('products', 'status')) $baseProduct['status'] = 'activo';
+            $campoImg = Schema::hasColumn('products', 'image') ? 'image' : (Schema::hasColumn('products', 'imagen') ? 'imagen' : null);
 
-                DB::table('products')->insert([
-                    $baseProduct,
-                    array_merge($baseProduct, [
-                        'name' => 'Xiaomi Redmi Note 13 Pro 256GB',
-                        'nombre' => 'Xiaomi Redmi Note 13 Pro 256GB',
-                        'description' => 'Cámara de 200MP, carga turbo 67W, 8GB RAM.',
-                        'descripcion' => 'Cámara de 200MP, carga turbo 67W, 8GB RAM.',
-                        'price' => 2100.00,
-                        'precio' => 2100.00,
-                        'stock' => 10,
-                    ]),
-                    array_merge($baseProduct, [
-                        'name' => 'Cargador Rápido 25W Tipo C',
-                        'nombre' => 'Cargador Rápido 25W Tipo C',
-                        'description' => 'Cargador original con cable reforzado para carga rápida.',
-                        'descripcion' => 'Cargador original con cable reforzado para carga rápida.',
-                        'price' => 85.00,
-                        'precio' => 85.00,
-                        'stock' => 30,
-                    ]),
-                    array_merge($baseProduct, [
-                        'name' => 'Funda Antigolpes + Vidrio 360',
-                        'nombre' => 'Funda Antigolpes + Vidrio 360',
-                        'description' => 'Protección completa de alto impacto para pantalla y carcasa.',
-                        'descripcion' => 'Protección completa de alto impacto para pantalla y carcasa.',
-                        'price' => 45.00,
-                        'precio' => 45.00,
-                        'stock' => 50,
-                    ]),
-                ]);
+            if ($campoImg) {
+                $prods = DB::table('products')->get();
+                foreach ($prods as $p) {
+                    $nombre = $p->name ?? ($p->nombre ?? '');
+                    $url = $imagenesMuestra['Default'];
+
+                    if (stripos($nombre, 'samsung') !== false) {
+                        $url = $imagenesMuestra['Samsung'];
+                    } elseif (stripos($nombre, 'iphone') !== false) {
+                        $url = $imagenesMuestra['iPhone'];
+                    } elseif (stripos($nombre, 'xiaomi') !== false) {
+                        $url = $imagenesMuestra['Xiaomi'];
+                    }
+
+                    // Si no tiene imagen o tiene ruta local rota, asignamos URL segura de muestra
+                    if (empty($p->$campoImg) || !str_starts_with($p->$campoImg, 'http')) {
+                        DB::table('products')->where('id', $p->id)->update([$campoImg => $url]);
+                    }
+                }
             }
         }
 
-        $total = DB::table('products')->count();
-        $activos = DB::table('products')->where('is_active', 1)->count();
+        $total = Schema::hasTable('products') ? DB::table('products')->count() : 0;
+        $activos = Schema::hasTable('products') ? DB::table('products')->where('is_active', 1)->count() : 0;
 
         return response()->json([
             'status' => 'success',
-            'mensaje' => 'Base de datos lista con productos activos.',
+            'mensaje' => 'Base de datos e imagenes optimizadas correctamente.',
             'total_productos' => $total,
             'productos_activos' => $activos
         ], 200, [], JSON_PRETTY_PRINT);
