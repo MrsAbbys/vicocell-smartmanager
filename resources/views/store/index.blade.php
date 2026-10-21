@@ -42,26 +42,21 @@
 
     <div class="row row-cols-1 row-cols-md-3 row-cols-lg-4 g-4 mb-4">
         @forelse($products as $product)
-            @php
-                $imgRaw = $product->image ?? ($product->imagen ?? '');
-                if (empty($imgRaw)) {
-                    $imgSrc = 'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=500&auto=format&fit=crop&q=60';
-                } elseif (str_starts_with($imgRaw, 'http://') || str_starts_with($imgRaw, 'https://')) {
-                    $imgSrc = $imgRaw;
-                } else {
-                    $imgSrc = asset('storage/' . ltrim($imgRaw, '/'));
-                }
-            @endphp
-
             <div class="col">
                 <div class="card h-100 shadow-sm border-0 rounded-3 overflow-hidden d-flex flex-column">
                     <!-- Contenedor de Imagen -->
                     <div class="d-flex align-items-center justify-content-center p-3" style="height: 220px; background-color: rgba(125, 125, 125, 0.05);">
-                        <img src="{{ $imgSrc }}"
-                             class="img-fluid"
-                             style="max-height: 100%; max-width: 100%; object-fit: contain;"
-                             alt="{{ $product->name }}"
-                             onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=500&auto=format&fit=crop&q=60';">
+                        @if($product->image)
+                            <img src="{{ asset('storage/' . $product->image) }}"
+                                 class="img-fluid"
+                                 style="max-height: 100%; max-width: 100%; object-fit: contain;"
+                                 alt="{{ $product->name }}">
+                        @else
+                            <div class="text-center text-muted">
+                                <i class="bi bi-phone fs-1 d-block opacity-50"></i>
+                                <small class="small">Sin imagen</small>
+                            </div>
+                        @endif
                     </div>
 
                     <div class="card-body d-flex flex-column pb-3">
@@ -94,7 +89,7 @@
                                 <button class="btn btn-secondary btn-sm" disabled>Agotado</button>
                             @endif
 
-                            <a href="https://wa.me/{{ env('VICOCELL_BOT_PHONE', '59170000000') }}?text=Hola%20VICOCELL,%20estoy%20interesado%20en%20el%20producto:%20{{ urlencode($product->name) }}%20(Bs.%20{{ $product->price }})"
+                            <a href="https://wa.me/59170000000?text=Hola%20VICOCELL,%20estoy%20interesado%20en%20el%20producto:%20{{ urlencode($product->name) }}%20(Bs.%20{{ $product->price }})"
                                target="_blank" class="btn btn-outline-success btn-sm">
                                 <i class="bi bi-whatsapp me-1"></i> Consultar WhatsApp
                             </a>
@@ -117,11 +112,9 @@
                                 @csrf
                                 <div class="modal-body">
                                     <div class="d-flex align-items-center mb-3 p-2 rounded" style="background-color: var(--input-bg);">
-                                        <img src="{{ $imgSrc }}"
-                                             class="rounded me-3"
-                                             style="width: 55px; height: 55px; object-fit: contain;"
-                                             alt="{{ $product->name }}"
-                                             onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=500&auto=format&fit=crop&q=60';">
+                                        @if($product->image)
+                                            <img src="{{ asset('storage/' . $product->image) }}" class="rounded me-3" style="width: 55px; height: 55px; object-fit: contain;" alt="{{ $product->name }}">
+                                        @endif
                                         <div>
                                             <h6 class="fw-bold mb-0">{{ $product->name }}</h6>
                                             <span class="text-info fw-bold">Precio unitario: Bs. {{ number_format($product->price, 2) }}</span>
