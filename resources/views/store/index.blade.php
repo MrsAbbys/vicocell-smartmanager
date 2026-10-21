@@ -17,14 +17,14 @@
                 <div class="col-md-5">
                     <div class="input-group">
                         <span class="input-group-text"><i class="bi bi-search text-muted"></i></span>
-                        <input type="text" name="search" class="form-control" placeholder="Buscar celulares o accesorios..." value="{{ $search ?? '' }}">
+                        <input type="text" name="search" class="form-control" placeholder="Buscar celulares o accesorios..." value="{{ $search }}">
                     </div>
                 </div>
                 <div class="col-md-4">
                     <select name="category" class="form-select">
                         <option value="">Todas las categorías</option>
                         @foreach($categories as $cat)
-                            <option value="{{ $cat->id }}" {{ ($categoryId ?? '') == $cat->id ? 'selected' : '' }}>
+                            <option value="{{ $cat->id }}" {{ $categoryId == $cat->id ? 'selected' : '' }}>
                                 {{ $cat->name }}
                             </option>
                         @endforeach
@@ -32,7 +32,7 @@
                 </div>
                 <div class="col-md-3 d-flex gap-2">
                     <button type="submit" class="btn btn-theme w-100"><i class="bi bi-filter me-1"></i> Filtrar</button>
-                    @if(!empty($search) || !empty($categoryId))
+                    @if($search || $categoryId)
                         <a href="{{ route('store.index') }}" class="btn btn-outline-secondary">Limpiar</a>
                     @endif
                 </div>
@@ -44,10 +44,8 @@
         @forelse($products as $product)
             @php
                 $imgRaw = $product->image ?? ($product->imagen ?? '');
-                $fallbackImg = 'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=500&auto=format&fit=crop&q=60';
-
                 if (empty($imgRaw)) {
-                    $imgSrc = $fallbackImg;
+                    $imgSrc = 'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=500&auto=format&fit=crop&q=60';
                 } elseif (str_starts_with($imgRaw, 'http://') || str_starts_with($imgRaw, 'https://')) {
                     $imgSrc = $imgRaw;
                 } else {
@@ -63,11 +61,11 @@
                              class="img-fluid"
                              style="max-height: 100%; max-width: 100%; object-fit: contain;"
                              alt="{{ $product->name }}"
-                             onerror="this.onerror=null; this.src='{{ $fallbackImg }}';">
+                             onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=500&auto=format&fit=crop&q=60';">
                     </div>
 
                     <div class="card-body d-flex flex-column pb-3">
-                        <span class="badge bg-secondary mb-2 align-self-start">{{ $product->category->name ?? ($product->category ?? 'General') }}</span>
+                        <span class="badge bg-secondary mb-2 align-self-start">{{ $product->category->name }}</span>
                         <h6 class="card-title fw-bold mb-1">{{ $product->name }}</h6>
                         <p class="card-text small opacity-75 flex-grow-1">{{ Str::limit($product->description, 65) ?? 'Producto disponible en tienda.' }}</p>
 
@@ -96,7 +94,7 @@
                                 <button class="btn btn-secondary btn-sm" disabled>Agotado</button>
                             @endif
 
-                            <a href="https://wa.me/59170000000?text=Hola%20VICOCELL,%20estoy%20interesado%20en%20el%20producto:%20{{ urlencode($product->name) }}%20(Bs.%20{{ $product->price }})"
+                            <a href="https://wa.me/{{ env('VICOCELL_BOT_PHONE', '59170000000') }}?text=Hola%20VICOCELL,%20estoy%20interesado%20en%20el%20producto:%20{{ urlencode($product->name) }}%20(Bs.%20{{ $product->price }})"
                                target="_blank" class="btn btn-outline-success btn-sm">
                                 <i class="bi bi-whatsapp me-1"></i> Consultar WhatsApp
                             </a>
@@ -114,6 +112,7 @@
                                 <h5 class="modal-title fw-bold"><i class="bi bi-cart-check me-2 text-info"></i>Confirmar Pedido</h5>
                                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                             </div>
+                            <!-- Importante: enctype="multipart/form-data" para permitir subida de comprobantes -->
                             <form action="{{ route('customer.checkout', $product) }}" method="POST" enctype="multipart/form-data">
                                 @csrf
                                 <div class="modal-body">
@@ -122,7 +121,7 @@
                                              class="rounded me-3"
                                              style="width: 55px; height: 55px; object-fit: contain;"
                                              alt="{{ $product->name }}"
-                                             onerror="this.onerror=null; this.src='{{ $fallbackImg }}';">
+                                             onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=500&auto=format&fit=crop&q=60';">
                                         <div>
                                             <h6 class="fw-bold mb-0">{{ $product->name }}</h6>
                                             <span class="text-info fw-bold">Precio unitario: Bs. {{ number_format($product->price, 2) }}</span>
@@ -142,7 +141,7 @@
                                         </select>
                                     </div>
 
-                                    <!-- Contenedor QR y Comprobante -->
+                                    <!-- Contenedor del Código QR y Subida de Comprobante -->
                                     <div id="qrBox{{ $product->id }}" class="card border-info mb-3 d-none" style="background-color: rgba(13, 202, 240, 0.05);">
                                         <div class="card-body text-center p-3">
                                             <div class="d-flex align-items-center justify-content-center mb-2 text-info">
@@ -176,6 +175,7 @@
                                                 </div>
                                             </div>
 
+                                            <!-- Campo para adjuntar el comprobante de pago -->
                                             <div class="text-start border-top pt-3 mt-2">
                                                 <label class="form-label fw-bold text-dark small mb-1">
                                                     <i class="bi bi-file-earmark-arrow-up me-1 text-primary"></i>Subir foto o captura del Comprobante:
